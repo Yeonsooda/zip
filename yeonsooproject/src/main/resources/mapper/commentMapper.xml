@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="commentSQL">
+	<!-- 댓글 작성  -->
+	<insert id="commentWrite" parameterType="java.util.Map">
+		insert into CMMT set CMMT_BBRD_NO = #{CMMT_BBRD_NO}
+							, CMMT_WRTER_NM = #{CMMT_WRTER_NM}	
+							, CMMT_CNTNS = #{CMMT_CNTNS}
+							, CMMT_WR_DTTM = now()
+	</insert>
+	<!-- 댓글 리스트 가져오기  -->
+	<select id="getCommentList" parameterType="java.util.Map" resultType="commentDTO">
+		select*from CMMT where CMMT_BBRD_NO = #{CMMT_BBRD_NO} order by CMMT_NO desc limit #{startNum}, 3
+	</select>
+	<!-- 총 댓글 수 가져오기 -->
+	<select id="getTotalComment" parameterType="java.util.Map" resultType="Integer">
+		select count(*) from CMMT where CMMT_BBRD_NO = #{CMMT_BBRD_NO}
+	</select>
+	<!-- 댓글 삭제 -->
+	<delete id="commentDelete" parameterType="Integer">
+		delete from CMMT where CMMT_NO = #{CMMT_NO}
+	</delete>
+	<!-- 댓글 정보 가져오기 -->
+	<select id="getComment" parameterType="Integer" resultType="commentDTO">
+		select CMMT_NO, CMMT_BBRD_NO, CMMT_WRTER_NM, CMMT_CNTNS, CMMT_WR_DTTM from CMMT where CMMT_NO=#{CMMT_NO}
+	</select>
+	<!-- 댓글 수정  -->
+	<update id="commentUpdate" parameterType="java.util.Map">
+	 	update CMMT set CMMT_WRTER_NM = #{CMMT_WRTER_NM}, CMMT_CNTNS = #{CMMT_CNTNS}, CMMT_WR_DTTM = now() where CMMT_NO = #{CMMT_NO} 
+	 	<!-- and CMMT_BBRD_NO=#{CMMT_BBRD_NO} -->
+	</update>
+	<!-- BoardController에서 시행 - 글 삭제 시 댓글 삭제 -->
+	<delete id="commentDeleteByBoard" parameterType="Integer">
+		delete from CMMT where CMMT_BBRD_NO = #{BBRD_NO}
+	</delete>
+</mapper>

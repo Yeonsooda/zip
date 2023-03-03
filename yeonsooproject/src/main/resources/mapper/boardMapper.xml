@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="boardSQL">
+	<!-- 글쓰기  -->
+	<insert id="boardWrite" parameterType="java.util.Map">
+		insert into BBRD set BBRD_WRTER_NM = #{BBRD_WRTER_NM}, BBRD_TTL = #{BBRD_TTL}, BBRD_CNTNS = #{BBRD_CNTNS}, BBRD_WR_DTTM = now()
+	</insert>
+	<!-- 글목록  -->
+	<select id="getBoardList" parameterType="Integer" resultType="BoardDTO">
+		select*from BBRD order by BBRD_NO desc limit #{startNum}, 5
+	</select>
+	<!-- 총 글 수  -->
+	<select id="getTotalBoard" resultType="Integer">
+		select count(*) from BBRD
+	</select>
+	<!-- 글보기 -->
+	<select id="getBoard" parameterType="Integer" resultType="BoardDTO">
+		select BBRD_NO, BBRD_TTL, BBRD_WRTER_NM, BBRD_WR_DTTM, BBRD_CNTNS from BBRD where BBRD_NO=#{BBRD_NO}
+	</select>
+	<!-- 글수정 -->
+	<update id="boardUpdate" parameterType="java.util.Map">
+		update BBRD set BBRD_TTL = #{BBRD_TTL}, BBRD_WRTER_NM = #{BBRD_WRTER_NM}, BBRD_CNTNS = #{BBRD_CNTNS}, BBRD_WR_DTTM = now() where BBRD_NO = #{BBRD_NO}
+	</update>
+	<!-- 글삭제 -->
+	<delete id="boardDelete" parameterType="Integer">
+		delete from BBRD where BBRD_NO = #{BBRD_NO}
+	</delete>
+	<!-- 검색 글 목록 -->
+	<select id="getBoardSearchList" parameterType="java.util.Map" resultType="BoardDTO">
+		select*from BBRD where ${searchOption} like concat('%', #{searchKeyword}, '%') order by BBRD_NO desc limit #{startNum}, 5
+	</select>
+	<!-- 검색 총 글수 -->
+	<select id="getSearchBoard" parameterType="java.util.Map" resultType="Integer">
+		select count(*) from BBRD where ${searchOption} like concat('%', #{searchKeyword}, '%')
+	</select>
+</mapper>
