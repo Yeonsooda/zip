@@ -12,7 +12,7 @@
       ✓ CSS
       ✓ HTML
       ✓ Oracle
-      
+    
 ![image](https://user-images.githubusercontent.com/107453907/222642904-286bca11-f12b-417e-bbea-3fd2e0e033cb.png)
 
 ## 🙆‍♀️ 개인 프로젝트
