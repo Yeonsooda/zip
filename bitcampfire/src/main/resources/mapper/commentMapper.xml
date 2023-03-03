@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="commentSQL">
+
+<!-- #################### 정수 시작 ########################## -->
+	<insert id = "writeCommentContent" parameterType="CommentDTO"> 
+		INSERT INTO COMMENT VALUES(
+							COMMENT2_SEQ.nextval, 
+							#{cmt_id},
+							#{cmt_uid},
+							#{cmt_cateid},
+							#{cmt_bid},
+							#{cmt_cotent},
+							sysdate)
+	</insert>
+	
+	<select id = "getCommentDTO" parameterType="int" resultType="CommentDTO"> 
+		SELECT * FROM COMMENT WHERE CMT_BID = #{CMT_BID}
+	</select>
+<!-- #################### 정수 끝 ########################## -->
+
+<!-- ======================== 풍혁 시작 ======================== -->
+	<insert id="write">
+		INSERT INTO COMMENT2 VALUES(
+								COMMENT2_SEQ.nextval,
+								#{cmt_uid},
+								#{cmt_cateid},
+								#{cmt_bid},
+								#{cmt_content},
+								sysdate
+								)
+	</insert>
+	
+	<select id="getCommentListByBoardId" parameterType="java.lang.String" resultType="CommentDTO">
+		SELECT * FROM COMMENT2 WHERE cmt_bid = ${cmt_bid}
+	</select>
+	
+	<update id="increaseCommentCount" parameterType="java.util.Map">
+		UPDATE 
+		<if test="cateid == 1">
+		board_inform
+		</if>
+		
+		<if test="cateid == 2">
+		board_review
+		</if>
+		
+		<if test="cateid == 3">
+		board_qna
+		</if>
+			 
+		<if test="cateid == 4">
+		board_free
+		</if>
+		SET board_cmt_cnt = board_cmt_cnt + 1
+		WHERE board_id = ${board_id} 
+	</update>
+	
+	<update id="decreaseCommentCount" parameterType="java.util.Map">
+		UPDATE 
+		<if test="cateid == 1">
+		board_inform
+		</if>
+		
+		<if test="cateid == 2">
+		board_review
+		</if>
+		
+		<if test="cateid == 3">
+		board_qna
+		</if>
+			 
+		<if test="cateid == 4">
+		board_free
+		</if>
+		SET board_cmt_cnt = board_cmt_cnt - 1
+		WHERE board_id = ${board_id} 
+	</update>
+	
+	
+	<select id="getCommentContentById" parameterType="java.lang.Integer" resultType="java.lang.String">
+		SELECT cmt_content FROM comment2
+		WHERE cmt_id = ${cmt_id}
+	</select>
+	
+	<update id="update" parameterType="java.util.Map">
+		UPDATE comment2
+		SET
+		cmt_content = #{cmt_content}
+		WHERE
+		cmt_id = ${cmt_id}
+	</update>
+	
+	<delete id="delete" parameterType="java.lang.Integer">
+		delete from comment2 where cmt_id = ${cmt_id} 
+	</delete>
+<!-- ======================== 풍혁 끝 ======================== -->	
+
+<!-- **************************유진 시작************************** -->
+<insert id="commentClassWrite">
+		INSERT INTO COMMENT2 (cmt_id
+							  ,cmt_uid
+							  ,cmt_cateid		
+							  ,cmt_bid
+							  ,cmt_content
+							  ,cmt_date_created)
+		VALUES(COMMENT2_SEQ.nextval,
+				#{cmt_uid},
+				5,
+				#{cmt_bid},
+				#{cmt_content},
+				sysdate)
+	</insert>
+	
+	<select id="getClassCommentListByBoardId" parameterType="java.lang.String" resultType="CommentDTO">
+
+		SELECT * FROM COMMENT2 WHERE cmt_bid = ${cmt_bid} and  cmt_cateid = 5
+
+	</select>
+	
+	
+	<select id="getClassCommentContentById" parameterType="java.lang.Integer" resultType="java.lang.String">
+		SELECT cmt_content FROM comment2
+		WHERE cmt_id = ${cmt_id}
+	</select>
+	
+	<update id="commentClassUpdate" parameterType="java.util.Map">
+		UPDATE comment2
+		SET
+		cmt_content = #{cmt_content}
+		WHERE
+		cmt_id = ${cmt_id}
+	</update>
+	
+	<delete id="commentClassDelete" parameterType="java.lang.Integer">
+		delete from comment2 where cmt_id = ${cmt_id} 
+	</delete>
+	
+	<update id="increaseClassCommentCount" parameterType="java.util.Map">
+		<!-- UPDATE BOARD_CLASS
+		SET board_cmtcnt = board_cmt_cnt + 1
+		WHERE board_id = ${board_id} and cmt_cateid = 5 --> 
+		UPDATE BOARD_CLASS
+		SET board_cmt_cnt = board_cmt_cnt + 1
+		WHERE board_id = ${board_id} 
+
+	</update>
+	
+	<update id="decreaseClassCommentCount" parameterType="java.util.Map">
+		<!-- UPDATE BOARD_CLASS
+		SET board_cmt_cnt = board_cmt_cnt - 1
+		WHERE board_id = ${board_id} and cmt_cateid = 5 --> 
+		UPDATE BOARD_CLASS
+		SET board_cmt_cnt = board_cmt_cnt - 1
+		WHERE board_id = ${board_id} 
+	</update>
+<!-- **************************유진 끝************************** -->
+
+</mapper>

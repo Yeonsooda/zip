@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/mvc"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:beans="http://www.springframework.org/schema/beans"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/mvc https://www.springframework.org/schema/mvc/spring-mvc.xsd
+		http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd">
+
+	<!-- DispatcherServlet Context: defines this servlet's request-processing infrastructure -->
+	
+	<!-- Enables the Spring MVC @Controller programming model -->
+	<annotation-driven />
+
+	<!-- Handles HTTP GET requests for /resources/** by efficiently serving up static resources in the ${webappRoot}/resources directory -->
+	<resources mapping="/resources/**" location="/resources/" />
+
+	<resources mapping="/css/**" location="/WEB-INF/css/" />
+	<resources mapping="/js/**" location="/WEB-INF/js/" />
+	<resources mapping="/summernote3/**" location="/summernote3/" />
+
+	<resources mapping="/img/**" location="/WEB-INF/img/" />
+	<!--  ###################### 유진 : 시작  0706###################### -->	
+	<resources mapping="/storage/**" location="/WEB-INF/storage/"/>
+	<!-- ####################### 유진 : 끝  0706###################### -->
+
+	<!-- Resolves views selected for rendering by @Controllers to .jsp resources in the /WEB-INF/views directory -->
+	<beans:bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<beans:property name="prefix" value="/WEB-INF/" />
+		<beans:property name="suffix" value=".jsp" />
+	</beans:bean>
+	
+	<!--  ###################### 유진 : 시작  0706###################### -->	
+	<beans:bean  id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">	
+		<beans:property name="maxUploadSize" value="5000000"></beans:property>
+		
+		<!-- 연수 추가(220726) 업로드 요청을 변환할 때 사용할 문자 인코딩 방식 -->
+		<beans:property name="defaultEncoding" value="utf-8" />
+	</beans:bean>
+	<!-- ####################### 유진 : 끝  0706###################### -->
+	
+	<!-- 인덱스 컨트롤러 -->	
+	<context:component-scan base-package="com.modak.home" />
+	
+	<!-- User 컨트롤러 -->
+	<context:component-scan base-package="com.modak.user.controller" />
+
+	<!-- board 컨트롤러 -->
+	<context:component-scan base-package="com.modak.board.controller" />
+	
+	<!-- comment 컨트롤러 -->
+	<context:component-scan base-package="com.modak.comment.controller" />
+
+	<!-- @@@@@@@@@@@@@@ 연수 : 어드민 페이지  수정 중(220715)  @@@@@@@@@@@@@@-->
+
+	<!-- admin 컨트롤러 -->	
+	<context:component-scan base-package="com.modak.admin.controller" />
+
+</beans:beans>

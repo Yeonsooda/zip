@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mybatis-spring="http://mybatis.org/schema/mybatis-spring"
+	xsi:schemaLocation="http://mybatis.org/schema/mybatis-spring http://mybatis.org/schema/mybatis-spring-1.2.xsd
+		http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.1.xsd">
+	
+	<!-- Root Context: defines shared resources visible to all other web components -->
+	
+	<!--  ###################### 유진 : 시작  0706###################### -->
+	<!-- 이메일 인증 설정-->
+	
+	<!-- gmail설정 -->
+	<bean id="mailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl"> 
+	     <property name="host" value="smtp.gmail.com" />
+	     <property name="port" value="587" />
+		 <property name="username" value="yujin980810@gmail.com"/> <!-- 자신의 이메일 아이디 -->
+		 <property name="password" value="luyjofsaegiyknng"/> <!-- 자신의 비밀번호 -->
+	 <!-- 보안연결 TLS과 관련된 설정 -->
+	     <property name="javaMailProperties">
+		    <props>
+		       <prop key="mail.smtp.auth">true</prop>
+		       <prop key="mail.smtp.starttls.enable">true</prop>
+		    </props>
+	     </property>
+	</bean>
+	<!-- ####################### 유진 : 끝  0706###################### -->
+	
+	<!-- @@@@@@@@@@@@@@@@@@@@@@@ 연수 : 시작  0711@@@@@@@@@@@@@@@@@@@@@@@ -->
+	<!-- 이메일 인증 설정 계정 1개 지움(220720)-->	
+	<!-- google mail 설정 -->
+	<bean id="mailSender4" class="org.springframework.mail.javamail.JavaMailSenderImpl"> 
+	     <property name="host" value="smtp.gmail.com" />
+	     <property name="port" value="587" />
+		 <property name="username" value="dustn551@gmail.com"/> <!-- 자신의 이메일 아이디 -->
+		 <property name="password" value="yqozghappzytkkqh"/> <!-- 자신의 비밀번호 -->
+	 <!-- 보안연결 TLS과 관련된 설정 -->
+	     <property name="javaMailProperties">
+		    <props>
+		       <prop key="mail.smtp.auth">true</prop>
+		       <prop key="mail.smtp.starttls.enable">true</prop>
+		    </props>
+	     </property>
+	</bean>
+	<!-- @@@@@@@@@@@@@@@@@@@@@@@ 연수 : 끝  0711@@@@@@@@@@@@@@@@@@@@@@@ -->
+		
+	<context:component-scan base-package="spring.conf" />
+	
+	<!-- user -->
+	<context:component-scan base-package="com.modak.user.bean" />
+	<context:component-scan base-package="com.modak.user.dao" />
+	<context:component-scan base-package="com.modak.user.service" />
+
+	<!-- board -->
+	<context:component-scan base-package="com.modak.board.bean" />
+	<context:component-scan base-package="com.modak.board.dao" />
+	<context:component-scan base-package="com.modak.board.service" />
+	
+	<!-- comment -->
+	<context:component-scan base-package="com.modak.comment.bean" />
+	<context:component-scan base-package="com.modak.comment.dao" />
+	<context:component-scan base-package="com.modak.comment.service" />
+	
+</beans>
+ 

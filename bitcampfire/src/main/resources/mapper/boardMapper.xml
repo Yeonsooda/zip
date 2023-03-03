@@ -1,0 +1,959 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- ~~~~~~~~~~~~~~~~~~~~~~ 공통 : 시작  ~~~~~~~~~~~~~~~~~~~~~~ -->
+	<mapper namespace="boardSQL">
+	
+<!-- ~~~~~~~~~~~~~~~~~~~~~~ 공통 : 끝  ~~~~~~~~~~~~~~~~~~~~~~ -->
+	<!-- **중요** 풍혁 : list 와 view의 통일을 위해 일단 table board_review로 통일 -->
+   	<!-- **중요** ; 주의, # $ 구분주의 -->
+   <!-- ======================== 풍혁 : 시작  ============================= -->
+		<!-- 풍혁(220703) : list 전체를 불러오는 sql 입니다. -->
+	   	<select id="getBoardUserWriteList" resultType="BoardDTO">
+	   		SELECT * FROM
+	   			<if test="cateid == 1">
+				board_inform
+				
+				</if>
+				
+				<if test="cateid == 2">
+				board_review
+				</if>
+				
+				<if test="cateid == 3">
+				board_qna
+				</if>
+					 
+				<if test="cateid == 4">
+				board_free
+				</if>
+	   	</select>
+	   	
+	   	<select id="getTotalBoardNum" parameterType="java.lang.Integer" resultType="java.lang.Integer">
+	   		SELECT count(*) FROM 
+	   			<if test="cateid == 1">
+				board_inform
+				</if>
+				
+				<if test="cateid == 2">
+				board_review
+				</if>
+				
+				<if test="cateid == 3">
+				board_qna
+				</if>
+					 
+				<if test="cateid == 4">
+				board_free
+				</if>
+	   	</select>
+	   	
+	   	<select id="getTotalBoardSearchNum" parameterType="java.lang.String" resultType="java.lang.Integer">
+	   		SELECT COUNT(*) FROM 
+	   			<if test="category == 'info'">
+				board_inform
+				</if>
+				
+				<if test="category == 'review'">
+				board_review
+				</if>
+				
+				<if test="category == 'qna'">
+				board_qna
+				</if>
+					 
+				<if test="category == 'free'">
+				board_free
+				</if> 
+    			WHERE BOARD_TITLE LIKE '%'||#{keyword}||'%'
+   				OR BOARD_CONTENT LIKE '%'||#{keyword}||'%'
+	   	</select>
+	   	
+	   	
+	   	<!-- 풍혁(220713) :  -->
+	   	<select id="getBoardRangeOrder" parameterType="java.util.Map" resultType="BoardDTO">
+	   		SELECT * FROM (
+	   			SELECT ROWNUM AS RN, TT.* FROM (
+	 				SELECT * FROM 
+	 				<if test="cateid == 1">
+					board_inform
+					</if>
+					
+					<if test="cateid == 2">
+					board_review
+					</if>
+					
+					<if test="cateid == 3">
+					board_qna
+					</if>
+						 
+					<if test="cateid == 4">
+					board_free
+					</if>
+	 				
+	 				<if test="sortOption == 'date'">
+	 				ORDER BY BOARD_DATE_CREATED DESC
+ 					</if>
+	 				
+	 				<if test="sortOption == 'vote'">
+	 				ORDER BY BOARD_VOTE_CNT DESC
+ 					</if>
+ 					
+	 				<if test="sortOption == 'view'">
+	 				ORDER BY BOARD_VIEW_CNT DESC
+ 					</if>
+ 				)TT
+			) WHERE RN &gt;=${startNum} AND RN &lt;=${endNum}
+	   	</select>
+	   	
+	   	<!-- 풍혁(220703) :  -->
+	   	<!-- 풍혁(0719) : index page는 최신의 몇개의 글만 표시되기 때문에, 이 쿼리는 index page전용으로 사용하겠습니다. 필요하면 써도 상관없음.  -->
+ 	   	<select id="getBoardRangeOrderByTime" parameterType="java.util.Map" resultType="BoardDTO">
+	   		SELECT * FROM (
+	   			SELECT ROWNUM AS RN, TT.* FROM (
+	 				SELECT * FROM 
+	 				<if test="category == 'info'">
+					board_inform
+					</if>
+					
+					<if test="category == 'review'">
+					board_review
+					</if>
+					
+					<if test="category == 'qna'">
+					board_qna
+					</if>
+						 
+					<if test="category == 'free'">
+					board_free
+					</if> 
+	 				ORDER BY BOARD_DATE_CREATED DESC)TT
+			) WHERE RN &gt;=${startNum} AND RN &lt;=${endNum}
+	   	</select> 
+	   	
+	   	<!-- 풍혁(220707) : 일단 title이나 내용으로 검색하는 SQL입니다. 최신순정렬 -->
+    	<select id="getBoardSearchRangeOrder" parameterType="java.util.Map" resultType="BoardDTO">
+	    	SELECT * FROM (	
+	    		SELECT ROWNUM AS RN, TT.* FROM 
+	    			(SELECT * FROM 
+	    				<if test="cateid == 1">
+						board_inform
+						</if>
+						
+						<if test="cateid == 2">
+						board_review
+						</if>
+						
+						<if test="cateid == 3">
+						board_qna
+						</if>
+							 
+						<if test="cateid == 4">
+						board_free
+						</if>
+	    				WHERE BOARD_TITLE LIKE '%'||#{keyword}||'%'
+	    				OR BOARD_CONTENT LIKE '%'||#{keyword}||'%'
+	    					<if test="sortOption == 'date'">
+			 				ORDER BY BOARD_DATE_CREATED DESC
+		 					</if>
+			 				
+			 				<if test="sortOption == 'vote'">
+			 				ORDER BY BOARD_VOTE_CNT DESC
+		 					</if>
+		 					
+			 				<if test="sortOption == 'view'">
+			 				ORDER BY BOARD_VIEW_CNT DESC
+		 					</if>
+	 				)TT
+ 			) WHERE RN &gt;=${startNum} AND RN &lt;=${endNum}
+    	</select>
+    	
+    	<!-- 풍혁0718 : 게시판 4개로 수정..! -->
+    	<insert id="boardWrite" parameterType="BoardDTO">
+	      INSERT INTO
+	      <!-- 풍혁0718 : 이렇게 계속 if 조건문 사용하는 것은 비효율적, 변수화 시키는 방법 알아보기  -->
+	      		<if test="board_cateid == 1">
+				board_inform
+				</if>
+				
+				<if test="board_cateid == 2">
+				board_review
+				</if>
+				
+				<if test="board_cateid == 3">
+				board_qna
+				</if>
+					 
+				<if test="board_cateid == 4">
+				board_free
+				</if>
+				(board_id, board_uid, board_cateid, board_title, board_content, board_date_created)
+	        VALUES
+	            (BOARD_SEQ.NEXTVAL,#{board_uid}, #{board_cateid}, #{board_title}, #{board_content},sysdate)
+    	</insert>
+    	
+    	<update id="update" parameterType="java.util.Map">
+    		UPDATE 
+    			<if test="board_cateid == 1">
+				board_inform
+				</if>
+				
+				<if test="board_cateid == 2">
+				board_review
+				</if>
+				
+				<if test="board_cateid == 3">
+				board_qna
+				</if>
+					 
+				<if test="board_cateid == 4">
+				board_free
+				</if>
+				SET 
+					board_title = #{board_title},
+					board_content = #{board_content},
+					board_cateid = ${board_cateid}
+				WHERE board_id = ${board_id}	 
+		</update>
+    	
+	    <select id="getCurrentSeq" resultType="java.lang.Integer">
+	    	select board_seq.currval from dual
+	    </select>
+	<!-- ======================== 풍혁 : 끝 ============================= -->
+	
+	<!--  ###################### 정수 : 시작  ###################### -->
+	<!-- 글 보기 -->
+		<select id = "getBoardContent" parameterType = "java.util.Map" resultType = "BoardDTO"> 
+			select * from 
+			<if test="cateid == 1">
+			board_inform
+			</if>
+			
+			<if test="cateid == 2">
+			board_review
+			</if>
+			
+			<if test="cateid == 3">
+			board_qna
+			</if>
+				 
+			<if test="cateid == 4">
+			board_free
+			</if>
+			 where board_id = ${board_id}
+		</select>
+		
+		<!-- <select id="getBoardCount" resultType="int">
+			select count(*) from board_review
+		</select> -->
+		
+		<!-- 조회수 증가처리 -->
+		<update id = "setHit" parameterType = "int">
+			update 
+				<if test="cateid == 1">
+				board_inform
+				</if>
+				
+				<if test="cateid == 2">
+				board_review
+				</if>
+				
+				<if test="cateid == 3">
+				board_qna
+				</if>
+					 
+				<if test="cateid == 4">
+				board_free
+				</if> 
+				
+			set board_view_cnt = board_view_cnt +1 where board_id = #{board_id} 
+		</update>
+		
+		<!-- 추천수 체크 (중복방지) -->
+		<select id = "recommendCheck" parameterType = "java.util.Map" resultType= "int">
+			select count(*) from vote where vote_bid = ${vote_bid} and vote_uid = ${vote_uid}
+		</select>
+		
+		<!-- 추천수 증가 (board_review 에 증가시켜 view에서 보여줌)-->
+		<!-- #: String(" ") / $:not String(" "없음) -->
+		<update id = "increaseRecommend" parameterType = "java.util.Map">
+			update
+				<if test="vote_cateid == 1">
+				board_inform
+				</if>
+				
+				<if test="vote_cateid == 2">
+				board_review
+				</if>
+				
+				<if test="vote_cateid == 3">
+				board_qna
+				</if>
+					 
+				<if test="vote_cateid == 4">
+				board_free
+				</if>
+			 set board_vote_cnt=board_vote_cnt+1 where board_id = ${vote_bid} 
+		</update>
+		
+		<!-- 추천 정보 추가 (vote테이블에 추가) -->
+		<insert id="addVote" parameterType="java.util.Map">
+			insert into vote values(vote_seq.nextval, ${vote_uid}, ${vote_cateid}, ${vote_bid})
+		</insert>
+			
+		<!-- 추천수 취소 (board_review에서 삭제)-->
+		<update id = "recommendCancel" parameterType = "java.util.Map">
+			update 
+				<if test="vote_cateid == 1">
+				board_inform
+				</if>
+				
+				<if test="vote_cateid == 2">
+				board_review
+				</if>
+				
+				<if test="vote_cateid == 3">
+				board_qna
+				</if>
+					 
+				<if test="vote_cateid == 4">
+				board_free
+				</if>
+			 set board_vote_cnt = board_vote_cnt-1 where board_id = ${vote_bid}
+		</update>
+		
+		<!-- 추천 정보 삭제 (vote 에서 삭제)-->
+		<update id="deleteVote" parameterType="java.util.Map">
+			delete from vote where vote_uid = ${vote_uid} and vote_bid = ${vote_bid} and vote_cateid = ${vote_cateid}
+		</update>
+		
+		<!-- 글 수정 폼 (원래 글 dto 가져오기)  -->
+		<select id="boardEditForm" parameterType = "java.util.Map" resultType = "BoardDTO">
+			select * from 
+				<if test="cateid == 1">
+				board_inform
+				</if>
+				
+				<if test="cateid == 2">
+				board_review
+				</if>
+				
+				<if test="cateid == 3">
+				board_qna
+				</if>
+					 
+				<if test="cateid == 4">
+				board_free
+				</if>
+			where board_id = ${board_id}
+		</select>
+		
+		<!-- 글 수정한 dto(수정한 dto넣기) -->
+		<insert id="boardEdit" parameterType="BoardDTO">
+			INSERT INTO 
+				<if test="cateid == 1">
+				board_inform
+				</if>
+				
+				<if test="cateid == 2">
+				board_review
+				</if>
+				
+				<if test="cateid == 3">
+				board_qna
+				</if>
+					 
+				<if test="cateid == 4">
+				board_free
+				</if>
+	            (board_id, board_uid, board_cateid, board_title, board_content, board_date_created)
+	        VALUES
+	        <!-- 풍혁0726 : 수정인데 NEXTVAL이 필요한가요? 수정인데 WHERE이 없음-->
+	            (BOARD_SEQ.nextval,#{board_uid}, #{board_cateid}, #{board_title}, #{board_content},sysdate)
+		</insert>
+		
+		<!-- 글 삭제 -->
+		<delete id="boardDelete" parameterType="java.util.Map">
+			delete from 
+				<if test="cateid == 1">
+				board_inform
+				</if>
+				
+				<if test="cateid == 2">
+				board_review
+				</if>
+				
+				<if test="cateid == 3">
+				board_qna
+				</if>
+					 
+				<if test="cateid == 4">
+				board_free
+				</if>
+			where board_id = ${board_id}
+		</delete>
+		
+
+		<!-- admin : board_review 테이블 전체 데이터 불러오기 -->
+		<select id="informList" resultType = "BoardDTO">
+			select * from board_inform
+		</select>
+		
+		<select id="reviewList" resultType = "BoardDTO">
+			select * from board_review
+		</select>
+
+		<select id="qnaList" resultType = "BoardDTO">
+			select * from board_qna
+		</select>
+		
+		<select id="freeList" resultType = "BoardDTO">
+			select * from board_free 
+		</select>
+		
+		<!-- admin 검색 -->
+		 <select id="adminBoardSearch" parameterType="java.util.Map" resultType="BoardDTO">
+ 		SELECT * FROM (	
+	   		SELECT ROWNUM AS RN, TT.* FROM(
+			select board_id, board_uid, board_cateid, board_title, board_date_created
+				from (
+				    select board_id,
+				           board_uid,
+				           board_cateid,
+				           board_title,
+				           board_date_created
+				    from   board_free 
+				   
+				    union all
+					  	   select board_id,
+				           board_uid,
+				           board_cateid,
+				           board_title,
+				           board_date_created
+				    from   board_inform 
+				    
+				    union all
+				    
+				    select board_id,
+    			           board_uid,
+    			           board_cateid,
+				           board_title,
+				           board_date_created
+				    from   board_qna
+				    
+				    union all
+				    
+				    select board_id,
+       			           board_uid,
+       			           board_cateid,
+				           board_title,
+				           board_date_created
+				    from   board_review
+				    
+				    union all
+				    
+				    select board_id,
+				           board_uid,
+				           board_classid,
+				           board_title,
+				           board_date_created
+				    from   board_class
+				    )  
+					<!-- <choose>
+						<when test="type=='board_title'.toString()">
+						    (board_title LIKE '%'||#{keyword}||'%')
+						</when>
+						<when test="type=='board_uid'.toString()">
+						    (board_uid LIKE '%'||#{keyword}||'%')
+						</when>
+						<when test="board_cateid=='W'.toString()">
+						    (board_cateid LIKE '%'||#{keyword}||'%')
+						</when>
+						                   </choose> -->
+						<if test="target=='board_title'">
+						   where board_title LIKE '%'||#{keyword}||'%'
+						</if>
+						<if test="target=='board_cateid'">
+						   	where board_cateid LIKE '%'||#{keyword}||'%'
+						</if>
+	   		ORDER BY BOARD_DATE_CREATED DESC)TT) 
+	   		WHERE (RN &gt;=${startNum} AND RN &lt;=${endNum})
+		</select> 
+		
+		<!-- admin 삭제 -->
+		<delete id="adminBoardDelete" parameterType = "java.util.Map">
+			delete 
+			<if test="board_cateid==1">
+				board_inform
+			</if>
+			<if test="board_cateid==2">
+				board_review 
+			</if>
+			<if test="board_cateid==3">
+				board_qna
+			</if>
+			<if test="board_cateid==4">
+				board_free
+			</if>
+			where board_id = ${board_id}
+		</delete>
+		
+		<!--  총 글 개수 가져오기 -->
+		<select id = "getBoardTotalA" resultType = "Integer">
+			select count(*) from 
+				(select*from(
+		            select board_id from board_review  
+		            union all
+		            select board_id from board_qna
+		            union all
+		            select board_id from board_inform
+		            union all
+		            select board_id from board_free))
+		</select>
+		
+		
+		
+		<select id = "getBoardTotalSearchA" resultType = "Integer" parameterType = "java.util.Map">
+			select count(*) from 
+				(select*from(
+		            select board_id from board_review 
+		           		<if test="target=='board_title'">
+						   where board_title LIKE '%'||#{keyword}||'%'
+						</if>
+		
+						<if test="target=='board_cateid'">
+						   	where board_cateid LIKE '%'||#{keyword}||'%'
+						</if>
+		            union all
+		            select board_id from board_qna 
+		            	<if test="target=='board_title'">
+						   where board_title LIKE '%'||#{keyword}||'%'
+						</if>
+		
+						<if test="target=='board_cateid'">
+						   	where board_cateid LIKE '%'||#{keyword}||'%'
+						</if>
+		            union all
+		            select board_id from board_inform  
+		            	<if test="target=='board_title'">
+						   where board_title LIKE '%'||#{keyword}||'%'
+						</if>
+		
+						<if test="target=='board_cateid'">
+						   	where board_cateid LIKE '%'||#{keyword}||'%'
+						</if>
+		            union all
+		            select board_id from board_free 
+		            	<if test="target=='board_title'">
+						   where board_title LIKE '%'||#{keyword}||'%'
+						</if>
+		
+						<if test="target=='board_cateid'">
+						   	where board_cateid LIKE '%'||#{keyword}||'%'
+						</if> ))   	
+		</select>
+		
+		
+	<!-- ####################### 정수 : 끝  ###################### -->
+	
+
+	
+	<!--  기진 : 시작  ###################### --> 
+	
+		<!-- userMyPage -->
+		<select id="getUserMyPageArticle" parameterType="java.util.Map" resultType="BoardDTO">
+			select * from (select ROWNUM as RN, board_id, board_uid, board_cateid, board_title, board_date_created
+				from (
+				    select board_id,
+				           board_uid,
+				           board_cateid,
+				           board_title,
+				           board_date_created
+				           
+				    from   board_free 
+				    where  board_uid = ${user_id}
+				    
+				    union all
+					  	   select board_id,
+				           board_uid,
+				           board_cateid,
+				           board_title,
+				           board_date_created
+				           
+				    from   board_inform 
+				    where  board_uid = ${user_id}
+				    
+				    union all
+				    
+				    select board_id,
+    			           board_uid,
+    			           board_cateid,
+				           board_title,
+				           board_date_created
+				           
+				    from   board_qna
+				    where  board_uid = ${user_id}
+				    
+				    union all
+				    
+				    select board_id,
+       			           board_uid,
+       			           board_cateid,
+				           board_title,
+				           board_date_created
+				           
+				    from   board_review
+				    where  board_uid = ${user_id}
+				    
+				    union all
+				    
+				    select board_id,
+				           board_uid,
+				           board_cateid,
+				           board_title,
+				           board_date_created
+				           
+				    from   board_class
+				    where  board_uid = ${user_id}
+                    
+				    ORDER BY BOARD_DATE_CREATED DESC
+				    ) 
+                    )tt
+                    where tt.rn &gt;= ${startNum} and tt.rn &lt;= ${endNum}
+                    
+                    
+		</select>		
+		<!-- userMyPage 끝 -->
+		
+	<!-- userMyPage Paging	 -->
+		 <select id="UserMyPagePaging"  parameterType="java.lang.Integer" resultType = "java.lang.Integer">
+				SELECT count(*) FROM (
+				SELECT board_id FROM board_free where board_uid = ${userId}
+				UNION ALL
+		        SELECT board_id FROM board_inform where board_uid = ${userId}
+				UNION ALL
+		        SELECT board_id FROM board_qna where board_uid = ${userId}
+				UNION ALL
+		        SELECT board_id FROM board_review where board_uid = ${userId}
+				UNION ALL
+				SELECT board_id FROM board_class where board_uid = ${userId}
+		        )
+		</select>
+		<!-- userMyPage  Paging 끝-->
+		
+	
+
+		<!-- userPage -->
+		<select id="getUserPageArticle" parameterType="java.util.Map" resultType="BoardDTO">
+			select * from (select ROWNUM as RN, board_id, board_uid, board_cateid, board_title, board_date_created
+				from (
+				    select board_id,
+				           board_uid,
+				           board_cateid,
+				           board_title,
+				           board_date_created
+				           
+				    from   board_free 
+				    where  board_uid = ${user_id}
+				    
+				    union all
+					  	   select board_id,
+				           board_uid,
+				           board_cateid,
+				           board_title,
+				           board_date_created
+				           
+				    from   board_inform 
+				    where  board_uid = ${user_id}
+				    
+				    union all
+				    
+				    select board_id,
+    			           board_uid,
+    			           board_cateid,
+				           board_title,
+				           board_date_created
+				           
+				    from   board_qna
+				    where  board_uid = ${user_id}
+				    
+				    union all
+				    
+				    select board_id,
+       			           board_uid,
+       			           board_cateid,
+				           board_title,
+				           board_date_created
+				           
+				    from   board_review
+				    where  board_uid = ${user_id}
+                    
+				    ORDER BY BOARD_DATE_CREATED DESC
+				    ) 
+                    )tt
+                    where tt.rn &gt;= ${startNum} and tt.rn &lt;= ${endNum}
+                    
+		</select> 
+	
+	
+		
+	<!-- userPage Paging	 -->
+		 <select id="UserPagePaging"  parameterType="java.lang.Integer" resultType = "java.lang.Integer">
+			SELECT count(*)  FROM (
+				SELECT board_id FROM board_free where board_uid = ${userId}
+				UNION ALL
+		        SELECT board_id FROM board_inform where board_uid = ${userId}
+				UNION ALL
+		        SELECT board_id FROM board_qna where board_uid = ${userId}
+				UNION ALL
+		        SELECT board_id FROM board_review where board_uid = ${userId}
+		        )
+			
+		</select>
+		<!-- userPage  Paging 끝-->
+	
+	
+	<!--  기진 : 끝  ###################### -->
+  
+  <!--  유진 : 시작   -->
+ 		<insert id="boardClassWrite" parameterType="BoardDTO">
+	      INSERT INTO BOARD_CLASS
+	            (board_id, board_uid, board_classid, board_title, board_content, board_cateid, board_date_created)
+	        VALUES
+	            (BOARD_SEQ.nextval,#{board_uid}, #{board_classid}, #{board_title}, #{board_content}, 5,sysdate)
+    	</insert>
+    	
+    	<select id="getBoardClassRangeOrder" parameterType="java.util.Map" resultType="BoardDTO">
+	    	SELECT * FROM (
+	   			SELECT ROWNUM AS RN, TT.* FROM (
+	 				SELECT * FROM BOARD_CLASS 
+	 				<if test="sortOption == 'date'">
+	 				ORDER BY BOARD_DATE_CREATED DESC
+ 					</if>
+	 				
+	 				<if test="sortOption == 'vote'">
+	 				ORDER BY BOARD_VOTE_CNT DESC
+ 					</if>
+ 					
+	 				<if test="sortOption == 'view'">
+	 				ORDER BY BOARD_VIEW_CNT DESC
+ 					</if>
+ 				)TT
+			) WHERE board_classid = #{class_id} and (RN &gt;=${startNum} AND RN &lt;=${endNum})
+    	</select>
+
+    	<select id="getTotalBoardClassNum" resultType="java.lang.Integer">
+	   		SELECT count(*) FROM BOARD_CLASS where board_classid = #{class_id}
+	   	</select>
+	   	
+	   	<select id="getBoardClassSearchRangeOrder" parameterType="java.util.Map" resultType="BoardDTO">
+	    	SELECT * FROM (	
+	    		SELECT ROWNUM AS RN, TT.* FROM 
+	    			(SELECT * FROM BOARD_CLASS 
+	    				WHERE BOARD_TITLE LIKE '%'||#{keyword}||'%'
+	    				OR BOARD_CONTENT LIKE '%'||#{keyword}||'%'
+	    					<if test="sortOption == 'date'">
+			 				ORDER BY BOARD_DATE_CREATED DESC
+		 					</if>
+			 				
+			 				<if test="sortOption == 'vote'">
+			 				ORDER BY BOARD_VOTE_CNT DESC
+		 					</if>
+		 					
+			 				<if test="sortOption == 'view'">
+			 				ORDER BY BOARD_VIEW_CNT DESC
+		 					</if>
+	 				)TT
+ 			) WHERE board_classid = #{class_id} and (RN &gt;=${startNum} AND RN &lt;=${endNum})
+    	</select>
+    	
+    	<select id="getTotalBoardClassSearchNum" parameterType="java.util.Map" resultType="java.lang.Integer">
+	   		SELECT COUNT(*) FROM BOARD_CLASS 
+    			WHERE board_classid = #{class_id} and
+    			(BOARD_TITLE LIKE '%'||#{keyword}||'%'
+   				OR BOARD_CONTENT LIKE '%'||#{keyword}||'%')
+	   	</select>
+	   	
+	   	<select id = "getBoardClassContent" parameterType = "java.util.Map" resultType = "BoardDTO"> 
+			select * from BOARD_CLASS where board_id = ${board_id} and board_classid = #{class_id}
+		</select>
+		
+		<update id = "setClassHit" parameterType = "int">
+			update BOARD_CLASS set board_view_cnt = board_view_cnt +1 where board_id = #{board_id}
+		</update>
+	   	
+	   	<select id = "boardClassRecommendCheck" parameterType = "java.util.Map" resultType= "int">
+			select count(*) from VOTE_BOARD_CLASS where vote_bid = ${vote_bid} and vote_uid = ${vote_uid} 
+		</select>
+		
+		<!-- 추천수 증가 (board_review 에 증가시켜 view에서 보여줌)-->
+		<!-- #: String(" ") / $:not String(" "없음) -->
+		<update id = "boardClassincreaseRecommend" parameterType = "java.util.Map">
+			update BOARD_CLASS set board_vote_cnt=board_vote_cnt+1 where board_id = ${vote_bid} 
+		</update>
+		
+		<!-- 추천 정보 추가 (vote테이블에 추가) -->
+		<insert id="boardClassaddVote" parameterType="java.util.Map">
+			insert into VOTE_BOARD_CLASS values(VOTE_BOARD_CLASS_seq.nextval, ${vote_uid}, 1, ${vote_bid})
+		</insert>
+	   	
+	   	<!-- 추천수 취소 (board_review에서 삭제)-->
+		<update id = "boardClassRecommendCancel" parameterType = "int">
+			update BOARD_CLASS set board_vote_cnt = board_vote_cnt-1 where board_id = ${vote_bid}
+		</update>
+		
+		<!-- 추천 정보 삭제 (vote 에서 삭제)-->
+		<update id="boardClassdeleteVote" parameterType="java.util.Map">
+			delete from VOTE_BOARD_CLASS where vote_uid = ${vote_uid} and vote_bid = ${vote_bid}
+		</update>
+	   	
+	   	<!-- 글 삭제 -->
+		<delete id="boardClassDelete" parameterType="int">
+			delete from BOARD_CLASS where board_id = ${board_id}
+		</delete>
+		
+		<!-- 글 수정 폼 (원래 글 dto 가져오기)  -->
+		<select id="boardClassEditForm" parameterType = "int" resultType = "BoardDTO">
+			select * from BOARD_CLASS where board_id = ${board_id}
+		</select>
+		
+		<update id="boardClassUpdate" parameterType="java.util.Map">
+    		UPDATE BOARD_CLASS
+				SET 
+					board_title = #{board_title},
+					board_content = #{board_content},
+					board_classid = ${board_classid}
+				WHERE board_id = ${board_id}	 
+		</update>
+		
+		<!-- @@@@@@@@@ 연수 시작: admincontroller > 어드민 페이지 > 공지사항 관리  @@@@@@@@@  -->
+		<!-- 공지사항 글작성 -->
+		<insert id="adminBoardNoticeWrite" parameterType="BoardDTO">
+		      INSERT INTO BOARD_AdminNotice
+		            (board_id, board_uid, board_cateid, board_title, board_content, board_date_created)
+	          VALUES
+		            (BOARD_SEQ.nextval, #{board_uid}, #{board_cateid}, #{board_title}, #{board_content}, sysdate)   
+		</insert>
+		<!-- 공지사항 리스트 가져오기 -->
+		<select id="getBoardNoticeAllList" parameterType="java.util.Map" resultType="BoardDTO">
+			<![CDATA[
+				select * from
+				(select rownum rn, kk.* from
+				(select * from BOARD_AdminNotice order by board_date_created desc)kk)
+				where rn >= #{startNum} and rn <= #{endNum}
+				]]>	
+	   	</select>	   	
+	   	<!-- 공지사항 글내용 가져오기 -->
+		<select id = "getAdminBoardNoticeContent" parameterType = "int" resultType = "BoardDTO"> 
+			select * from BOARD_AdminNotice where board_id = ${board_id}
+		</select>
+		<!-- 공지사항 조회수 -->
+		<update id = "setAdminBoardNoticeHit" parameterType = "int">
+			update BOARD_AdminNotice set board_view_cnt = board_view_cnt +1 where board_id = #{board_id}
+		</update>
+		
+		<!-- @@@ 게시글 선택 삭제 기능(220721) item=board_id  -->
+	 	<delete id="adminNoticeDelete_select" parameterType="java.util.Map">
+			delete BOARD_AdminNotice where board_id in 			
+			<foreach collection="check" item="item" open="(" close=")" separator=",">
+				#{item}
+			</foreach>
+	  	</delete>
+	  	
+	  	<!-- @@@ 게시글 개별 삭제 기능(220722) -->
+	 	<delete id="adminNoticeDelete" parameterType="int">
+			delete BOARD_AdminNotice where board_id = ${board_id}
+	  	</delete>
+	  	<!-- 수정을 위한 공지사항 글내용 가져오기 -->
+		<select id = "getAdminBoardNotice_edit" parameterType = "int" resultType = "BoardDTO"> 
+			select * from BOARD_AdminNotice where board_id = ${board_id}
+		</select>
+		<!-- 글 수정  -->
+		<update id="adminBoardNoticeUpdate" parameterType="java.util.Map">
+    		UPDATE BOARD_AdminNotice SET 
+					board_title = #{board_title},
+					board_content = #{board_content},
+					board_cateid = ${board_cateid}
+				WHERE board_id = ${board_id}	 
+		</update>
+    	<select id="getTotalBoardAdminNoticeNum" resultType="java.lang.Integer">
+	   		SELECT count(*) FROM BOARD_AdminNotice
+	   	</select>
+	   	
+		<!-- 공지사항 리스트 - 서치 가져오기 -->
+		<select id="getBoardNoticeSearchList" parameterType="java.util.Map" resultType="BoardDTO">
+			<!-- 	<![CDATA[
+				select * from
+				(select rownum rn, kk.* from
+				(select*from BOARD_AdminNotice where ${searchOption} like '%'||#{keyword}||'%' 
+								   order by BOARD_CATEID LIKE desc) kk)
+				where rn >= #{startNum} and rn <= #{endNum}
+				]]>  -->
+	 				
+		 		SELECT * FROM (	
+		    		SELECT ROWNUM AS RN, TT.* FROM(
+		    		SELECT * FROM BOARD_AdminNotice
+		    		<if test='searchOption.equals("total")'>
+		    			WHERE BOARD_ID LIKE '%'||#{keyword}||'%'
+		    				OR BOARD_TITLE LIKE '%'||#{keyword}||'%'
+	    					OR BOARD_CONTENT LIKE '%'||#{keyword}||'%'
+	    					OR BOARD_CATEID LIKE '%'||#{keyword}||'%'
+	    					OR BOARD_UID LIKE '%'||#{keyword}||'%'
+	    					OR BOARD_DATE_CREATED LIKE '%'||#{keyword}||'%'
+		    		</if>
+		    		<if test='!searchOption.equals("total")'>
+		    			where ${searchOption} like '%'||#{keyword}||'%' 
+		    		</if>
+				ORDER BY BOARD_DATE_CREATED DESC)TT) 
+				WHERE (RN &gt;=${startNum} AND RN &lt;=${endNum})
+	   	</select>
+	   	<select id="getTotalBoardAdminNoticeSearchNum" parameterType="java.util.Map" resultType="java.lang.Integer">
+	   		select count(*) from BOARD_AdminNotice 
+	   		<if test='searchOption.equals("total")'>
+	   			WHERE BOARD_ID LIKE '%'||#{keyword}||'%'
+    				OR BOARD_TITLE LIKE '%'||#{keyword}||'%'
+   					OR BOARD_CONTENT LIKE '%'||#{keyword}||'%'
+   					OR BOARD_CATEID LIKE '%'||#{keyword}||'%'
+   					OR BOARD_UID LIKE '%'||#{keyword}||'%'
+   					OR BOARD_DATE_CREATED LIKE '%'||#{keyword}||'%'
+	   		</if>
+	   		<if test='!searchOption.equals("total")'>
+    			where ${searchOption} like '%'||#{keyword}||'%' 
+    		</if>
+	   	</select>
+	   	<!-- 게시판별 공지사항 띄우기-->
+		<select id="getAdminBoardNoticeListOfficial" parameterType="int" resultType="BoardDTO">
+				SELECT * FROM (	
+				    		SELECT ROWNUM AS RN, TT.* FROM(
+				    		SELECT * FROM BOARD_AdminNotice	where board_cateid=6
+		
+							ORDER BY BOARD_DATE_CREATED DESC)TT) 
+							WHERE (RN &gt;=1 AND RN &lt;=1)<!-- 1개씩만 노출되게 수정(220726)  -->
+				union all			
+				SELECT * FROM (	
+			    		SELECT ROWNUM AS RN2, TT2.* FROM(
+			    		SELECT * FROM BOARD_AdminNotice
+			 		
+			    		<if test="cateid == 1">
+			    			where board_cateid=1
+			    		</if>
+			    		<if test="cateid == 2">
+			    			where board_cateid=2
+			    		</if>
+		    			<if test="cateid == 3">
+			    			where board_cateid=3
+			    		</if>
+	    				<if test="cateid == 4">
+			    			where board_cateid=4
+			    		</if>
+		    			<if test="cateid == 5">
+			    			where board_cateid=5
+			    		</if>				    		
+			    	
+						ORDER BY BOARD_DATE_CREATED DESC)TT2) 
+						WHERE (RN2 &gt;=1 AND RN2 &lt;=1)<!-- 1개씩만 노출되게 수정(220726)  -->
+						
+	   	</select>	   		
+		<!-- @@@@@@@@@ 연수 끝: admincontroller > 어드민 페이지 > 공지사항 관리  @@@@@@@@@  -->
+
+</mapper>

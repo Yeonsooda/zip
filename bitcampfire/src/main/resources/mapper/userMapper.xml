@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="userSQL">
+
+
+	<!-- ~~~~~~~~~~~~~~~~~~~~~~ 공통 : 시작  ~~~~~~~~~~~~~~~~~~~~~~ -->
+		
+	<!-- ~~~~~~~~~~~~~~~~~~~~~~ 공통 : 끝  ~~~~~~~~~~~~~~~~~~~~~~ -->
+	
+   
+  	<!-- ======================== 연수: 시작(220706)  ============================= -->
+   <!-- 회원정보 수정 시작  -->
+ 	<!-- 회원정보 수정  : 정보 가져오기-->   	
+	<select id="getUser" parameterType="String" resultType="UserAllDTO">
+        select * from user2 where user_email=#{user_email}
+    </select>
+
+    <!-- @@@ 연수 : 학원 검색 기능 수정중(0711) @@@ -->    
+	<select id="classList" resultType="UserAllDTO">
+        select * from class order by class_id
+    </select>
+    
+	<!-- 회원정보 수정: 닉네임 중복체크 -->
+    <select id="userUpdate_nicknameCheck" parameterType="String" resultType="UserAllDTO">
+  		select * from user2 where user_nickname=#{user_nickname}
+  	</select>
+  	
+  	 <!-- 회원정보 수정: 이메일 중복체크 -->
+    <select id="userUpdate_emailCheck" parameterType="String" resultType="UserAllDTO">
+  		select * from user2 where user_email=#{user_email}
+  	</select>
+  	
+  	<!-- 회원정보 수정: 프로필 사진 수정 -->
+    <update id="update_userImg" parameterType="UserAllDTO">
+  		update user2 set user_img = #{user_img}, user_logtime = sysdate where user_email = #{user_email}	  			    
+  	</update>  	
+    
+    <!-- 회원정보 수정: 수정하기 --> 
+    <update id="update_userInfo" parameterType="UserAllDTO">
+  		update user2 set user_name = #{user_name} 
+  					   , user_nickname = #{user_nickname}
+  					   , user_classid = #{user_classid}
+  					   , user_logtime = sysdate where user_email = #{user_email} 		  			    
+  	</update>
+	
+  	<!-- 회원정보 수정: 이메일 수정 -->
+    <update id="update_userEmail" parameterType="java.util.Map">
+  		update user2 set user_email = #{user_email}, user_logtime = sysdate where user_id = #{user_id}	  			    
+  	</update>
+
+     <!-- 비밀번호 수정: 비밀번호 일치 여부 확인 - 회원정보 불러오기 -->   	
+	<select id="checkPwd" parameterType="String" resultType="UserDTO">
+        select * from user2 where user_email=#{user_email}
+    </select>
+    
+    <!-- 회원정보 수정: 비밀번호 수정하기 --> 
+  	<update id="pwdChangeComplete" parameterType="java.util.Map">
+  		update user2 set user_pwd = #{user_pwd} where user_email= #{user_email}
+  	</update> 
+    <!-- 회원정보 수정 끝  -->
+    
+    <!-- 회원탈퇴 -->
+     <delete id="delete" parameterType="String">
+         delete user2 where user_email = #{user_email}
+     </delete>
+     
+	 <!-- @@@@@@ 연수 : 기존 가입 회원 카카오 연동 로그인 시 정보 수정(220714) @@@@@@  -->
+ 	<update id="updateBykakao" parameterType="java.util.HashMap">
+		update user2 set user_name = #{nickname}
+						, user_email = #{email}
+						, user_nickname = ''
+						, user_pwd = ''
+						, user_img = 'campfire.jpg'
+						, user_auth = 'Y'
+						, user_classid = 0
+						, user_social = 'K'
+						, user_logtime = sysdate where user_email = #{email}
+	</update>
+	<!-- @@@ 연수 : UserAdminController에서 요청한 서비스  -->
+	<!-- @@@ 어드민 페이지를 위한 유저 리스트 가져오기(220717) 페이징 처리 포함 수정 -->
+     <select id="getUserAllList" parameterType="java.util.Map" resultType="userAllDTO">
+ 		<!-- select * from user2 -->
+		<![CDATA[
+		select * from
+		(select rownum rn, kk.* from
+		(select * from user2 order by user_id desc)kk)
+		where rn >= #{startNum} and rn <= #{endNum}
+		]]>	
+ 	</select>
+ 	<!-- //연수: 어드민 페이지> 회원관리 > 학원명 한글로 바꾸기 -->
+	<select id="getUserClass"  parameterType="String" resultType="userAllDTO">
+ 		select * from class where class_id = #{user_classid}
+ 	</select>
+  	<!-- @@@ 총 유저 수 구하기: 어드민 userlist for 페이징 처리(220717)	 -->
+  	<select id="getUserTotalA" resultType="int">
+  		select count(*) from user2  		
+  	</select>
+  	<!-- //@@@ 서치된 유저 정보 가져오기: 어드민 userlist by 서치(220717) -->
+    <select id="getUserSearchList" parameterType="java.util.Map" resultType="userAllDTO">
+		<![CDATA[
+		select * from
+		(select rownum rn, kk.* from
+		(select*from user2 where ${searchOption} like '%'||#{keyword}||'%' 
+						   order by user_id desc) kk)
+		where rn >= #{startNum} and rn <= #{endNum}
+		]]> 
+ 	</select>
+
+  	<!-- //@@@ 서치된 총 유저 수 구하기: 어드민 userlist for 서치용 페이징 처리(220717) -->
+  	<select id="getUserTotalSearchA" parameterType="java.util.Map" resultType="int">
+  		select count(*) from user2 where ${searchOption} like '%'||#{keyword}||'%'		
+  	</select>
+ 	
+ 	<!-- @@@ 회원 선택 삭제 기능(220715) -->
+ 	<delete id="adminUserDelete_select" parameterType="java.util.Map">
+		delete user2 where user_email in 
+		
+		<foreach collection="check" item="user_email" open="(" close=")" separator=",">
+			#{user_email}
+		</foreach>
+  	</delete> 
+  	<!-- @@ 관리자 선택 등록(220724) -->
+	<update id="adminRegister" parameterType="java.util.Map">
+		update user2 set user_grade='A' where user_email in 
+		
+		<foreach collection="check" item="user_email" open="(" close=")" separator=",">
+			#{user_email}
+		</foreach>
+  	</update>
+	<!-- @@ 관리자 선택 등록해제(220724) -->
+	<update id="adminRegisterCancel" parameterType="java.util.Map">
+		update user2 set user_grade='U' where user_email in 
+		
+		<foreach collection="check" item="user_email" open="(" close=")" separator=",">
+			#{user_email}
+		</foreach>
+  	</update>
+  	
+	<!-- @@@ 연수 : BoardNoticeAdminController에서 요청한 서비스 -->
+	<!-- @@@ 어드민 > 공지사항 리스트에 띄울 유저 정보 가져오기(220724) -->
+	<select id="getUserInfoForNoticeList" parameterType="int" resultType="UserAllDTO">
+        select * from user2 where user_id=${board_uid}
+    </select>
+	<!-- ======================== 연수 : 끝(220706) ============================= -->
+
+	
+	<!--  ###################### 유진 : 시작  0706###################### -->
+	<insert id="user_register" parameterType="UserAllDTO">
+  		insert into user2(user_id
+  						,user_email
+  						,user_pwd
+  						,user_nickname
+  						,user_name
+  						,user_classid
+  						,user_img
+  						,user_auth
+  						,user_social
+  						,user_logtime) 
+  		values(user2_SEQ.nextval
+  			,#{user_email}
+  			,#{user_pwd}
+  			,#{user_nickname}
+  			,#{user_name}
+  			,#{user_classid}
+  			,'campfire.jpg'
+  			,'Y'
+  			,'X' <!-- 일반 로그인 회원  -->
+  			,sysdate)	
+  	</insert> 
+	<!-- <insert id="user_register" parameterType="UserAllDTO">
+		begin
+	  		insert into user2(user_id
+	  						,user_email
+	  						,user_pwd
+	  						,user_nickname
+	  						,user_name
+	  						,user_auth
+	  						,user_logtime) 
+	  		values(user2_SEQ.nextval
+	  			,#{user_email}
+	  			,#{user_pwd}
+	  			,#{user_nickname}
+	  			,#{user_name}
+	  			,'Y'
+	  			,sysdate);
+	  		
+	  		insert into class(class_id
+	  						, class_class)
+	  		values (CLASS_SEQ.nextval
+	  				, #{class_class});
+	  	end;
+  		
+  	</insert> -->
+
+  	<select id="userSignup_emailCheck" parameterType="String" resultType="UserAllDTO">
+  		select * from user2 where user_email=#{user_email}
+  	</select>
+  	
+  	<select id="userSignup_nicknameCheck" parameterType="String" resultType="UserAllDTO">
+  		select * from user2 where user_nickname=#{user_nickname}
+  	</select>	
+  	
+  	<select id="getUserInformation" parameterType="String" resultType="UserDTO">
+  		select * from user2 where user_email=#{user_email}
+  	</select>
+  	
+  	<update id="pwdFindChangeComplete" parameterType="java.util.Map">
+  		update user2 set user_pwd = #{user_pwd} where user_email= #{user_email}
+  	</update>
+  	
+  	
+  	<select id="findKakao" parameterType="java.util.HashMap" resultType="UserAllDTO">
+
+		select * from user2 where user_email=#{email}
+
+	</select>
+	
+	<!-- 정보 저장 -->
+	<insert id="kakaoInsert" parameterType="java.util.HashMap">
+		<!-- insert into user2(user_id
+						, user_name
+						, user_email
+						, user_img
+						, user_auth
+						, user_classid
+						, user_social
+						, user_logtime)
+		values(user2_SEQ.nextval
+			, #{nickname}
+			, #{email}
+			, 'campfire.jpg'
+			, 'Y'
+			, 0
+			, 'K'
+			, sysdate) -->
+		<!-- 연수 : 관리자 회원 삭제를 위한 카카오 카카오 아이디 저장 추가(220716)	 -->	
+		insert into user2(user_id
+						, user_name
+						, user_email
+						, user_img
+						, user_auth
+						, user_classid
+						, user_social
+						, user_logtime
+						, user_kakaoId)
+		values(user2_SEQ.nextval
+			, #{nickname}
+			, #{email}
+			, 'campfire.jpg'
+			, 'Y'
+			, 0
+			, 'K'
+			, sysdate
+			, #{kakaoId})	
+			
+	</insert>
+	
+	<select id="getUserClass_Class" parameterType="integer" resultType="UserAllDTO">
+		select * from class where class_id=#{class_id}
+	</select>
+
+	<!-- ####################### 유진 : 끝  0706###################### -->
+
+	<!--  @@@@@@@@@@@@@@ 기진 : 시작  @@@@@@@@@@@@@@-->
+	
+	<!-- 로그인 -->
+	<select id="login" parameterType="String" resultType="UserAllDTO">
+		select * from user2 where user_email=#{user_email}
+	</select>
+	
+	
+	 <select id="getUserInfo" parameterType="String" resultType="UserDTO">
+	 	select * from user2 where user_id=#{user_id}
+	 </select>
+	
+	<!-- @@@@@@@@@@@@@@ 기진 : 끝  @@@@@@@@@@@@@@ -->
+
+
+	<!-- %%%%%%%%%%%%%%%%%% 풍혁 : 시작  %%%%%%%%%%%%%%%%%% -->
+	<select id="getUserIdByEmail" parameterType="java.lang.String" resultType="java.lang.Integer">
+		select user_id from user2 where user_email=#{session_email}
+	</select>
+	
+	<select id="getUserNameByUserId" parameterType="java.lang.Integer" resultType="java.lang.String">
+		select user_nickname from user2 where user_id=${board_uid}
+	</select>
+	
+	<select id="getUserImgByUserid" parameterType="java.lang.Integer" resultType="java.lang.String">
+		select user_img from user2 where user_id = ${user_id}
+	</select>
+	
+	<!-- %%%%%%%%%%%%%%%%%% 풍혁 : 끝  %%%%%%%%%%%%%%%%%% -->
+	
+	
+	
+	
+
+</mapper>
